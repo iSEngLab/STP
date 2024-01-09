@@ -2,9 +2,10 @@
 生成句子
 """
 
+import copy
 import re
 
-from commonApi import *
+import commonApi
 import common
 
 from syntactic import find_clauses
@@ -27,8 +28,8 @@ def gen(sentence):
 
     # 存在主句
     if len(sent_main) != 0:
-        if sent_main[0] == ',' or sent_main[0] == '.':
-            sent_main = sent_main[1:len(sent_main)]
+        if sent_main[0] == "," or sent_main[0] == ".":
+            sent_main = sent_main[1 : len(sent_main)]
         # 主句直接添加为生成句
         if len(sent_clauses) != 0:
             common.sentences_gen.append(sent_main)
@@ -37,18 +38,30 @@ def gen(sentence):
         # dependency_main_enhancep = common.nlpEN.dependency_parse_enhancep(sent_main)
         # 寻找主句中需要保留的部分
         common.retain_tokens.clear()
-        common.retain_tokens = find_inseparable(token_main)
+        common.retain_tokens = commonApi.find_inseparable(token_main)
         # 识别主干内容
         common.trunk.clear()
-        dependency_traversal(dependency_main, token_main, common.trunk)
+        commonApi.dependency_traversal(dependency_main, token_main, common.trunk)
         # 识别主句中的并列成分
-        cc_list = cc_part(dependency_main, IndexTree.fromstring(common.nlpEN.parse(sent_main)))
+        cc_list = cc_part(
+            dependency_main,
+            commonApi.IndexTree.fromstring(common.nlpEN.parse(sent_main)),
+        )
         # 主句无并列
         if len(cc_list) == 0:
             # 构建依存关系树
-            dependency_tree_main, root = construct_dependency_tree(dependency_main, token_main)
+            dependency_tree_main, root = commonApi.construct_dependency_tree(
+                dependency_main, token_main
+            )
             remain_token_main = [i for i in range(len(token_main))]
-            pruning(dependency_tree_main, root, dependency_main, token_main, remain_token_main, sent_main)
+            pruning(
+                dependency_tree_main,
+                root,
+                dependency_main,
+                token_main,
+                remain_token_main,
+                sent_main,
+            )
         # 主句有并列成分
         else:
             for sent_cc in cc_list:
@@ -60,14 +73,23 @@ def gen(sentence):
                 dependency_cc = common.nlpEN.dependency_parse(sent_cc)
                 # 寻找并列句中需要保留的部分
                 common.retain_tokens.clear()
-                common.retain_tokens = find_inseparable(token_cc)
+                common.retain_tokens = commonApi.find_inseparable(token_cc)
                 # 识别并列句中的主干内容
                 common.trunk.clear()
-                dependency_traversal(dependency_cc, token_cc, common.trunk)
+                commonApi.dependency_traversal(dependency_cc, token_cc, common.trunk)
                 # 构建依存关系树
-                dependency_tree_cc, root = construct_dependency_tree(dependency_cc, token_cc)
+                dependency_tree_cc, root = commonApi.construct_dependency_tree(
+                    dependency_cc, token_cc
+                )
                 remain_token_cc = [i for i in range(len(token_cc))]
-                pruning(dependency_tree_cc, root, dependency_cc, token_cc, remain_token_cc, sent_cc)
+                pruning(
+                    dependency_tree_cc,
+                    root,
+                    dependency_cc,
+                    token_cc,
+                    remain_token_cc,
+                    sent_cc,
+                )
 
     # 对从句进行处理，步骤与主句相同
     for sent_clause in sent_clauses:
@@ -76,14 +98,26 @@ def gen(sentence):
         clause_dependency = common.nlpEN.dependency_parse(sent_clause)
         # clause_dependency_enhancep = common.nlpEN.dependency_parse_enhancep(sent_clause)
         clause_token = common.nlpEN.word_tokenize(sent_clause)
-        common.retain_tokens = find_inseparable(clause_token)
-        dependency_traversal(clause_dependency, clause_token, common.trunk)
-        cc_list = cc_part(clause_dependency, IndexTree.fromstring(common.nlpEN.parse(sent_clause)))
+        common.retain_tokens = commonApi.find_inseparable(clause_token)
+        commonApi.dependency_traversal(clause_dependency, clause_token, common.trunk)
+        cc_list = cc_part(
+            clause_dependency,
+            commonApi.IndexTree.fromstring(common.nlpEN.parse(sent_clause)),
+        )
 
         if len(cc_list) == 0:
-            clause_dependency_tree, root = construct_dependency_tree(clause_dependency, clause_token)
+            clause_dependency_tree, root = commonApi.construct_dependency_tree(
+                clause_dependency, clause_token
+            )
             remain_token_clause = [i for i in range(len(clause_token))]
-            pruning(clause_dependency_tree, root, clause_dependency, clause_token, remain_token_clause, sent_clause)
+            pruning(
+                clause_dependency_tree,
+                root,
+                clause_dependency,
+                clause_token,
+                remain_token_clause,
+                sent_clause,
+            )
         else:
             for sent_cc in cc_list:
                 ch = sent_cc[-1]
@@ -93,12 +127,21 @@ def gen(sentence):
                 token_cc = common.nlpEN.word_tokenize(sent_cc)
                 dependency_cc = common.nlpEN.dependency_parse(sent_cc)
                 common.retain_tokens.clear()
-                common.retain_tokens = find_inseparable(token_cc)
+                common.retain_tokens = commonApi.find_inseparable(token_cc)
                 common.trunk.clear()
-                dependency_traversal(dependency_cc, token_cc, common.trunk)
-                dependency_tree_cc, root = construct_dependency_tree(dependency_cc, token_cc)
+                commonApi.dependency_traversal(dependency_cc, token_cc, common.trunk)
+                dependency_tree_cc, root = commonApi.construct_dependency_tree(
+                    dependency_cc, token_cc
+                )
                 remain_token_cc = [i for i in range(len(token_cc))]
-                pruning(dependency_tree_cc, root, dependency_cc, token_cc, remain_token_cc, sent_cc)
+                pruning(
+                    dependency_tree_cc,
+                    root,
+                    dependency_cc,
+                    token_cc,
+                    remain_token_cc,
+                    sent_cc,
+                )
     result = copy.deepcopy(common.sentences_gen)
 
     if len(token) > 6 and len(result) == 0:
@@ -125,7 +168,7 @@ def correct_punctuation(sentence: str):
     punc_pattern = re.compile("[,.]{2,}")
     s = sentence
     # 加句号
-    if not s.endswith(".\"") and not s.endswith("."):
+    if not s.endswith('."') and not s.endswith("."):
         s += "."
 
     # 去除多个标点
@@ -134,30 +177,30 @@ def correct_punctuation(sentence: str):
         span = result.span()
         # 在句首直接去除
         if span[0] == 0:
-            s = s[span[1]:]
+            s = s[span[1] :]
         # 在句末保留最后一个
         elif span[1] == len(s):
-            s = s[:span[0]] + s[-1]
+            s = s[: span[0]] + s[-1]
         # 在句中保留第一个
         else:
-            s = s[:span[0] + 1] + s[span[1]:]
+            s = s[: span[0] + 1] + s[span[1] :]
         result = re.search(punc_pattern, s)
 
     # 删除未能匹配成对的双引号
-    last_index_quote_mark = s.find("\"", 0)
+    last_index_quote_mark = s.find('"', 0)
     quote_mark = 1
     while last_index_quote_mark >= 0:
         tmp_last = last_index_quote_mark
-        last_index_quote_mark = s.find("\"", tmp_last + 1)
+        last_index_quote_mark = s.find('"', tmp_last + 1)
         if last_index_quote_mark < 0:
             if quote_mark % 2 == 1:
-                s = s[:tmp_last] + s[tmp_last + 1:]
+                s = s[:tmp_last] + s[tmp_last + 1 :]
             break
         else:
             quote_mark += 1
 
     # 去除开头的标点
-    while len(s) > 0 and (s[0] == '.' or s[0] == ','):
+    while len(s) > 0 and (s[0] == "." or s[0] == ","):
         s = s[1:]
 
     return s.strip()
@@ -170,12 +213,14 @@ def gen_all(dataset):
     :param dataset: 数据集path
     :return:
     """
-    read_conf()
+    commonApi.read_conf()
     nlp_en = common.nlpEN
     dic = {}
     str_list = []
 
-    workbook = openpyxl.load_workbook('./data/original_sentences/News.xlsx')  # 返回一个workbook数据类型的值
+    workbook = openpyxl.load_workbook(
+        "./data/original_sentences/News.xlsx"
+    )  # 返回一个workbook数据类型的值
     # print(workbook.sheetnames)  # 打印Excel表中的所有表
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "./gcd.json"  # 凭据
     for name in workbook.sheetnames:
@@ -184,7 +229,7 @@ def gen_all(dataset):
         sheet = workbook[name]  # 获取指定sheet表
         sheet_len = eval(sheet.dimensions.split("B")[1])
         for i in range(sheet_len):
-            cell = sheet.cell(row=i + 1, column=1).value
+            cell = str(sheet.cell(row=i + 1, column=1).value)
             line = cell
             sent = line.split("\n")[0]
             dependency = nlp_en.dependency_parse(sent)
@@ -196,7 +241,12 @@ def gen_all(dataset):
                 else:
                     first = token[begin - 1]
                 last = token[end - 1]
-                strr += i + '-'.join([str(begin), first]) + '-'.join([str(end), last]) + "\n"
+                strr += (
+                    i
+                    + "-".join([str(begin), first])
+                    + "-".join([str(end), last])
+                    + "\n"
+                )
             str_list.append(strr)
             phrases = gen(sent)
             dic[sent] = []
@@ -205,9 +255,9 @@ def gen_all(dataset):
     return dic, str_list
 
 
-if __name__ == '__main__':
-    read_conf()
+if __name__ == "__main__":
+    commonApi.read_conf()
     # sent = "he said he expected that fiscal policy will be supportive and the macro leverage ratio will rise modestly next year."
-    sent = "Ni Pengfei, a research center director of the Chinese Academy of Social Sciences, was quoted by China News Service as saying that \"policies must be stable and consistent, and at the same time must be fine-tuned according to different areas' specific situations\"."
+    sent = 'Ni Pengfei, a research center director of the Chinese Academy of Social Sciences, was quoted by China News Service as saying that "policies must be stable and consistent, and at the same time must be fine-tuned according to different areas\' specific situations".'
     print("\n".join(gen(sent)))
     common.nlpEN.close()

@@ -1,0 +1,9 @@
+# imported from black, https://black.readthedocs.io/en/stable/the_black_code_style.html#line-length
+[flake8]
+max-line-length = 80
+select = C,E,F,W,B,B950
+# E231: Missing whitespace after ",", ";", or ":"
+# Black seems to handle this differently
+# B950: Line too long
+# Black takes care of this
+ignore = E203, E501, W503, E231, B950

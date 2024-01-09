@@ -1,0 +1,66 @@
+{
+  "python.testing.pytestArgs": ["--capture=tee-sys", "."],
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestEnabled": true,
+  "editor.hideCursorInOverviewRuler": true,
+  "editor.formatOnSave": true,
+  "[python]": {
+    "editor.rulers": [88],
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll": "explicit",
+      "source.organizeImports": "never"
+    }
+  },
+  "[shellscript]": {
+    "editor.tabSize": 2,
+    "editor.indentSize": "tabSize",
+    "editor.autoIndent": "keep",
+    "editor.formatOnSave": false,
+    "editor.defaultFormatter": null,
+    "editor.insertSpaces": true,
+    "editor.detectIndentation": false
+  },
+  "[sql]": {
+    "editor.formatOnSave": false
+  },
+  "[yaml]": {
+    "editor.formatOnSave": false
+  },
+  "[helm]": {
+    "editor.formatOnSave": false
+  },
+  "[helm-template]": {
+    "editor.formatOnSave": false
+  },
+  "[markdown]": {
+    "editor.unicodeHighlight.ambiguousCharacters": false,
+    "editor.unicodeHighlight.invisibleCharacters": false,
+    "diffEditor.ignoreTrimWhitespace": false,
+    "editor.wordWrap": "on",
+    "editor.quickSuggestions": {
+      "comments": "off",
+      "strings": "off",
+      "other": "off"
+    }
+  },
+  "python.languageServer": "Pylance",
+  "files.exclude": {
+    "build/": true,
+    "**/__pycache__": true,
+    "**/.mypy_cache": true,
+    "**/.pytest_cache": true
+  },
+  "notebook.formatOnSave.enabled": true,
+  "files.insertFinalNewline": true,
+  "html.format.wrapLineLength": 0,
+  "yaml.format.enable": false,
+  "python.analysis.autoImportCompletions": true,
+  "yaml.schemas": {
+    "https://json.schemastore.org/helmfile.json": ["*/helmfile.yaml"]
+  },
+  "python.analysis.typeCheckingMode": "basic",
+  "mypy-type-checker.importStrategy": "fromEnvironment",
+  "mypy-type-checker.showNotification": true
+}

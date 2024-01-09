@@ -1,0 +1,10 @@
+{
+    "recommendations": [
+        "ms-python.python",
+        "charliermarsh.ruff",
+        "ms-python.vscode-pylance",
+        "eamodio.gitlens",
+        "ms-vsliveshare.vsliveshare",
+        "esbenp.prettier-vscode"
+    ]
+}

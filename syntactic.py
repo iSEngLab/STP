@@ -4,7 +4,9 @@
 
 from nltk.tree.parented import ParentedTree
 
-from commonApi import *
+import nltk.tree as tree
+
+import commonApi
 import common
 
 
@@ -33,17 +35,21 @@ def find_clauses(sent):
     token = common.nlpEN.word_tokenize(sent)
 
     # 由于从句可能出现包含关系，这里为了能够最大程度去除从句，因而按照长度从长到短依次去除从句
-    s_t_d = [(s_clause, s_sentence, s_add_sentence),
-             (t_clause, t_sentence, t_add_sentence),
-             (d_clause, d_sentence, d_add_sentence)]
+    s_t_d = [
+        (s_clause, s_sentence, s_add_sentence),
+        (t_clause, t_sentence, t_add_sentence),
+        (d_clause, d_sentence, d_add_sentence),
+    ]
     s_t_d.sort(key=lambda x: len(x[1]), reverse=True)
-    for (s_t_d_clause, s_t_d_sentence, s_t_d_add_sentence) in s_t_d:
+    for s_t_d_clause, s_t_d_sentence, s_t_d_add_sentence in s_t_d:
         clause_de_tokenize = common.de_tokenizer.detokenize(s_t_d_clause)
         sentence_de_tokenize = common.de_tokenizer.detokenize(s_t_d_sentence)
         if clause_de_tokenize != "":
             clause_de_tokenize = clause_de_tokenize + "."
             result.append(clause_de_tokenize)
-            sent = replace_clause(token, sentence_de_tokenize, s_t_d_add_sentence)
+            sent = commonApi.replace_clause(
+                token, sentence_de_tokenize, s_t_d_add_sentence
+            )
             token = common.nlpEN.word_tokenize(sent)
 
     source_tree = tree.Tree.fromstring(common.nlpEN.parse(sent))
@@ -54,16 +60,16 @@ def find_clauses(sent):
     token = common.nlpEN.word_tokenize(sent)
     main_remain_token_indexes = [i for i in range(len(token))]  # 主句保留的token index
     # 对于从句的删除应该是连续的token
-    cons_traversal(source_tree)  # 识别不可拆组合词、从句
+    commonApi.cons_traversal(source_tree)  # 识别不可拆组合词、从句
 
     # 如果主句中还有从句
     if len(common.clauses_tokens) > 0:
         # 对每一句从句
         for i in range(len(common.clauses_tokens)):
-            clause = ' '.join(common.clauses_tokens[i])
+            clause = " ".join(common.clauses_tokens[i])
             # 删除从句
-            remain_tokens = remove_clause_tokens(clause, token)
-            if clause[-1] != '.':
+            remain_tokens = commonApi.remove_clause_tokens(clause, token)
+            if clause[-1] != ".":
                 clause += "."
             clauses_remain_tokens.append(remain_tokens)
             clauses_local.append(clause)
@@ -73,7 +79,7 @@ def find_clauses(sent):
         for j in clause_token:
             main_remain_token_indexes.remove(j)
     # 对主句进行处理：
-    sent_main = token_to_sentence(token, main_remain_token_indexes)
+    sent_main = commonApi.token_to_sentence(token, main_remain_token_indexes)
     clauses_local += result
     return sent_main, clauses_local
 
@@ -100,15 +106,21 @@ def find_subject_clause(sent_tree):
                 if len(queue) == 0:
                     break
                 current_next = queue[0]
-                if isinstance(current_next,
-                              tree.Tree) and current.parent() == current_next.parent() and current_next.label() == "VP":  # Verb phrase
+                if (
+                    isinstance(current_next, tree.Tree)
+                    and current.parent() == current_next.parent()  # type: ignore
+                    and current_next.label() == "VP"
+                ):  # Verb phrase
                     s_sentence = current.leaves()
                     son = current[0]
                     if isinstance(son, tree.Tree):
                         if son.label() == "WHNP":
                             original_wh = son.leaves()[0]
-                            invert_wh = is_invert_wh_structure(current)
-                            if len(son.leaves()) == 1 and son.leaves()[0].lower() == "who":
+                            invert_wh = commonApi.is_invert_wh_structure(current)
+                            if (
+                                len(son.leaves()) == 1
+                                and son.leaves()[0].lower() == "who"
+                            ):
                                 s_add_sentence = "he"
                             else:
                                 s_add_sentence = "it"
@@ -121,7 +133,11 @@ def find_subject_clause(sent_tree):
                 queue.append(current[i])
 
     s_add_sentence2 = [s_add_sentence] if s_add_sentence != "" else []
-    return ([original_wh] + s_clause if invert_wh else s_add_sentence2 + s_clause), s_sentence, s_add_sentence
+    return (
+        ([original_wh] + s_clause if invert_wh else s_add_sentence2 + s_clause),
+        s_sentence,
+        s_add_sentence,
+    )
 
 
 def find_predicative_clause(sent_tree):
@@ -147,20 +163,28 @@ def find_predicative_clause(sent_tree):
                     flag2 = False
                     index_to = -1
                     for i in range(len(current)):
-                        if not flag1 and isinstance(current[i], tree.Tree) and (current[i].label().startswith("VB")):
+                        if (
+                            not flag1
+                            and isinstance(current[i], tree.Tree)
+                            and (current[i].label().startswith("VB"))  # type: ignore
+                        ):
                             flag1 = True
-                        if flag1 and not flag2 and isinstance(current[i], tree.Tree) and (
-                                current[i].label() == "SBAR"):
+                        if (
+                            flag1
+                            and not flag2
+                            and isinstance(current[i], tree.Tree)
+                            and (current[i].label() == "SBAR")  # type: ignore
+                        ):
                             flag2 = True
                             index_to = i
 
                     if flag1 and flag2:
-                        t_sentence = current[index_to].leaves()
+                        t_sentence = current[index_to].leaves()  # type: ignore
                         son = current[index_to][0]
                         if isinstance(son, tree.Tree):
                             if son.label() == "WHNP":
                                 original_wh = son.leaves()[0]
-                                invert_wh = is_invert_wh_structure(current)
+                                invert_wh = commonApi.is_invert_wh_structure(current)
                                 if son.leaves()[0].lower() == "who":
                                     t_add_sentence = "he"
                                 else:
@@ -168,14 +192,18 @@ def find_predicative_clause(sent_tree):
                                 current[index_to].remove(son)
                             elif son.label() == "IN":
                                 current[index_to].remove(son)
-                            t_clause = current[index_to].leaves()
+                            t_clause = current[index_to].leaves()  # type: ignore
                         break
 
             for i in range(len(current)):
                 queue.append(current[i])
 
     t_add_sentence2 = [t_add_sentence] if t_add_sentence != "" else []
-    return (([original_wh] + t_clause) if invert_wh else (t_add_sentence2 + t_clause)), t_sentence, ""
+    return (
+        (([original_wh] + t_clause) if invert_wh else (t_add_sentence2 + t_clause)),
+        t_sentence,
+        "",
+    )
 
 
 def find_other_clause(sent_tree):
@@ -201,20 +229,28 @@ def find_other_clause(sent_tree):
                     flag2 = False
                     index_to = -1
                     for i in range(len(current)):
-                        if not flag1 and isinstance(current[i], tree.Tree) and (current[i].label() == "NP"):
+                        if (
+                            not flag1
+                            and isinstance(current[i], tree.Tree)
+                            and (current[i].label() == "NP")  # type: ignore
+                        ):
                             flag1 = True
-                        if flag1 and not flag2 and isinstance(current[i], tree.Tree) and (
-                                current[i].label() == "SBAR"):
+                        if (
+                            flag1
+                            and not flag2
+                            and isinstance(current[i], tree.Tree)
+                            and (current[i].label() == "SBAR")  # type: ignore
+                        ):
                             flag2 = True
                             index_to = i
 
                     if flag1 and flag2:
-                        d_sentence = current[index_to].leaves()
+                        d_sentence = current[index_to].leaves()  # type: ignore
                         son = current[index_to][0]
                         if isinstance(son, tree.Tree):
                             if son.label() == "WHNP":
                                 original_wh = son.leaves()[0]
-                                invert_wh = is_invert_wh_structure(current)
+                                invert_wh = commonApi.is_invert_wh_structure(current)
                                 if son.leaves()[0].lower() == "who":
                                     d_add_sentence = "he"
                                 else:
@@ -222,14 +258,22 @@ def find_other_clause(sent_tree):
                                 current[index_to].remove(son)
                             elif son.label() == "IN":
                                 current[index_to].remove(son)
-                            d_clause = current[index_to].leaves()
+                            d_clause = current[index_to].leaves()  # type: ignore
                         break
             for i in range(len(current)):
                 queue.append(current[i])
 
     d_add_sentence2 = [d_add_sentence] if d_add_sentence != "" else []
-    return ([original_wh] + d_clause if invert_wh else d_add_sentence2 + d_clause), d_sentence, ""
+    return (
+        ([original_wh] + d_clause if invert_wh else d_add_sentence2 + d_clause),
+        d_sentence,
+        "",
+    )
 
 
-if __name__ == '__main__':
-    print(find_clauses("he said he expected that fiscal policy will be supportive and the macro leverage ratio will rise modestly next year."))
+if __name__ == "__main__":
+    print(
+        find_clauses(
+            "he said he expected that fiscal policy will be supportive and the macro leverage ratio will rise modestly next year."
+        )
+    )

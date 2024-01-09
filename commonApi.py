@@ -1,4 +1,5 @@
 import copy
+from typing import Any
 
 import common
 import nltk.tree as tree
@@ -7,11 +8,11 @@ from treelib import Tree as Tr
 
 def replace_clause(token, clause_to_replace, replace_word):
     """
-        删除从句，添加替换词，生成新句子
-        :param token: 原句token序列
-        :param replace_word:从句替换词
-        :param clause_to_replace: 从句
-        :return: 从句被替换后的生成句
+    删除从句，添加替换词，生成新句子
+    :param token: 原句token序列
+    :param replace_word:从句替换词
+    :param clause_to_replace: 从句
+    :return: 从句被替换后的生成句
     """
     clause_tokens = common.nlpEN.word_tokenize(clause_to_replace)
     tokens_after_replacement = copy.deepcopy(token)
@@ -31,10 +32,14 @@ def replace_clause(token, clause_to_replace, replace_word):
     if replace_index < 0:
         return common.de_tokenizer.detokenize(token)
     # 替换从句
-    tokens_after_replacement = tokens_after_replacement[:replace_index] + [replace_word] + tokens_after_replacement[
-                                                                                           replace_index + len(
-                                                                                               clause_tokens):]
-    if len(tokens_after_replacement) > 0 and (tokens_after_replacement[0] == ',' or tokens_after_replacement[0] == "."):
+    tokens_after_replacement = (
+        tokens_after_replacement[:replace_index]
+        + [replace_word]
+        + tokens_after_replacement[replace_index + len(clause_tokens) :]
+    )
+    if len(tokens_after_replacement) > 0 and (
+        tokens_after_replacement[0] == "," or tokens_after_replacement[0] == "."
+    ):
         tokens_after_replacement.pop(0)
     return common.de_tokenizer.detokenize(tokens_after_replacement)
 
@@ -67,7 +72,8 @@ def token_to_sentence(token, remain_token_indexes):
     :param remain_token_indexes: 需要保留token index
     :return: 新的子句
     """
-    return common.de_tokenizer.detokenize([token[i] for i in remain_token_indexes])
+    tokens = [token[i] for i in remain_token_indexes]
+    return common.de_tokenizer.detokenize(tokens)
 
 
 def cons_traversal(t):
@@ -87,7 +93,7 @@ def cons_traversal(t):
                     common.inseparable.append(current.leaves())
                 continue
             for i in range(len(current)):
-                if isinstance(current[i], tree.Tree) and (current[i].label() == "HYPH"):
+                if isinstance(current[i], tree.Tree) and (current[i].label() == "HYPH"):  # type: ignore
                     flag = True
             if not flag:
                 for i in range(len(current)):
@@ -169,10 +175,9 @@ def dependency_traversal(dependency_tree, token, trunk):
     """
     dependency_parse = copy.deepcopy(dependency_tree)
     token = copy.deepcopy(token)
-    root = -1
     while len(dependency_parse) != 0:
         dependency_parse_item = dependency_parse.pop(0)
-        i, begin, end = dependency_parse_item
+        i, _, end = dependency_parse_item
         if common.relationship.get(i, -10) == 3:
             trunk.append(end - 1)
 
@@ -207,42 +212,55 @@ def construct_dependency_tree(dependency, token):
             t.create_node(token[end - 1], end, data=Node(i, 0, token[end - 1]))
             continue
         elif t.contains(begin):
-            t.create_node(token[end - 1], end, parent=begin, data=Node(i, 0, token[end - 1]))
+            t.create_node(
+                token[end - 1], end, parent=begin, data=Node(i, 0, token[end - 1])
+            )
         elif len(dependency_parse) >= 1:
             dependency_parse.append(dependency_parse_item)
     return t, root
 
 
 class IndexTree(tree.Tree):
-    def __init__(self, node, children=None, indexes=None):
+    def __init__(
+        self,
+        node,
+        indexes: list[Any],
+        children: Any = None,
+    ):
         super().__init__(node, children)
-        self.indexes = indexes
+        self.indexes: list[Any] = indexes
 
     def __deepcopy__(self, memo):
         return type(self).convert(self)
 
     def remove_nodes_at_same_level(self, cc_index: int, nodes_index, retain):
         """
-        在找到保留并列成分的前提下，删除和cc同一level的并列成分
+        在找到保留并列成分的前提下,删除和cc同一level的并列成分
         :param cc_index: cc的index
         :param nodes_index: 需要删除的并列成分index
         :param retain: 需要保留的并列成分
         :return:
         """
-        current = self
+        current: Any = self
         # 是否找到cc
         found = False
         while True:
             flag = False  # cc是否存在
             for k in range(len(current)):
                 # 如果是cc
-                if isinstance(current[k].indexes, list) and len(current[k].indexes) == 1 and current[k].indexes[0] == \
-                        cc_index:
+                if (
+                    isinstance(current[k].indexes, list)
+                    and len(current[k].indexes) == 1
+                    and current[k].indexes[0] == cc_index
+                ):
                     found = True
                     flag = True
                     break
                 # cc所在子树
-                if isinstance(current[k].indexes, list) and cc_index in current[k].indexes:
+                if (
+                    isinstance(current[k].indexes, list)
+                    and cc_index in current[k].indexes
+                ):
                     current = current[k]
                     flag = True
                     break
@@ -259,8 +277,15 @@ class IndexTree(tree.Tree):
                 if retain in current[i].indexes:
                     find_retain = True
                 # 含有需删除并列成分
-                if len(set(current[i].indexes).intersection(
-                        set(nodes_index + [cc_index]))) > 0 and retain not in nodes_index:
+                if (
+                    len(
+                        set(current[i].indexes).intersection(
+                            set(nodes_index + [cc_index])
+                        )
+                    )
+                    > 0
+                    and retain not in nodes_index
+                ):
                     to_remove.append(current[i])
             if find_retain:
                 [current.remove(i) for i in to_remove]
@@ -279,7 +304,7 @@ class IndexTree(tree.Tree):
             return t
 
 
-def constituent_tree_with_indexes(constituent_tree: IndexTree, start_index=1):
+def constituent_tree_with_indexes(constituent_tree: IndexTree | Any, start_index=1):
     """
     为成分树添加indexes
     :param constituent_tree:
@@ -296,7 +321,7 @@ def constituent_tree_with_indexes(constituent_tree: IndexTree, start_index=1):
 
         offset = 0
         for i in range(len(constituent_tree)):
-            child_leaves = constituent_tree[i].leaves()
+            child_leaves = constituent_tree[i].leaves()  # type: ignore
             constituent_tree_with_indexes(constituent_tree[i], offset + start_index)
             offset += len(child_leaves)
 
@@ -309,8 +334,8 @@ def read_conf(p="./related-documentation/Relationship"):
     f = open(p)
     line = f.readline()
     while line:
-        line = line[0:len(line) - 1]
-        sarr = line.split(' ')
+        line = line[0 : len(line) - 1]
+        sarr = line.split(" ")
         common.relationship[sarr[0]] = eval(sarr[1])
         line = f.readline()
     f.close()

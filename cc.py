@@ -1,4 +1,5 @@
-from commonApi import *
+import copy
+import commonApi
 import common
 
 # def cc_part(dependencies, token):
@@ -71,7 +72,7 @@ import common
 #     return result
 
 
-def cc_part(dependencies, constituent_tree: IndexTree):
+def cc_part(dependencies, constituent_tree: commonApi.IndexTree):
     """
     借助依存树和语法树进行剪枝
     :param constituent_tree:
@@ -79,7 +80,7 @@ def cc_part(dependencies, constituent_tree: IndexTree):
     :return:
     """
 
-    constituent_tree_with_indexes(constituent_tree)
+    commonApi.constituent_tree_with_indexes(constituent_tree)
     result = []
     # 找出所有的conj
     conjs = filter(lambda x: x[0].startswith("conj"), dependencies)
@@ -118,6 +119,10 @@ def cc_part(dependencies, constituent_tree: IndexTree):
             conjs_to_remove.pop(j)
             constituent_tree_copy = copy.deepcopy(constituent_tree)
             cc_to_remove = cc[0]
-            constituent_tree_copy.remove_nodes_at_same_level(cc_to_remove, conjs_to_remove, conjs_group[j])
-            result.append(common.de_tokenizer.detokenize(constituent_tree_copy.leaves()))
+            constituent_tree_copy.remove_nodes_at_same_level(
+                cc_to_remove, conjs_to_remove, conjs_group[j]
+            )
+            result.append(
+                common.de_tokenizer.detokenize(constituent_tree_copy.leaves())
+            )
     return result

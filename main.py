@@ -1,5 +1,5 @@
-import string
 import time
+from typing import Any
 import openpyxl
 import common
 import gen
@@ -10,7 +10,20 @@ import translate
 nlp_cn = common.nlpCN
 nlp_en = common.nlpEN
 # 数据集名称
-setList = ['Politics', 'Business', 'Culture', 'Sports', 'Tech', 'TravelFood', 'Health', 'LifeStyle', 'Legal', 'Opinion','Business_Old','Politics_Old']
+setList = [
+    "Politics",
+    "Business",
+    "Culture",
+    "Sports",
+    "Tech",
+    "TravelFood",
+    "Health",
+    "LifeStyle",
+    "Legal",
+    "Opinion",
+    "Business_Old",
+    "Politics_Old",
+]
 setName = setList[9]
 dataset = "./data/original_sentences/" + setName
 thod = 0.7
@@ -18,17 +31,23 @@ thod = 0.7
 bing_translate_api_key = ""
 google_translate_api_key = ""
 # bing target language: Chinese
-bing_source_language = 'en'
-bing_target_language = 'zh'
+bing_source_language = "en"
+bing_target_language = "zh"
 # Google target language: zh
-google_source_language = 'en'
-google_target_language = 'zh-cn'
+google_source_language = "en"
+google_target_language = "zh-cn"
 # Youdao Target Language：
 youdao_source_language = "en"
 youdao_target_language = "zh"
 
 
-def collect_target_sentences(translator, filtered_sent, source_language, target_language, api_key=None):
+def collect_target_sentences(
+    translator: str,
+    filtered_sent: dict[str, Any],
+    source_language: str,
+    target_language: str,
+    api_key: str | None = None,
+) -> dict[str, Any]:
     """
     收集翻译语句结果
     :param translator: 翻译器选择
@@ -39,12 +58,22 @@ def collect_target_sentences(translator, filtered_sent, source_language, target_
     :return: 需要翻译句子的字典
     """
     """Return Translation dic for a translator"""
-    if translator == 'Google':
-        return translate.GoogleTranslate(api_key, filtered_sent, source_language, target_language)
-    if translator == 'Bing':
-        return translate.BingTranslate(api_key, filtered_sent, source_language, target_language)
+    if translator == "Google":
+        return translate.GoogleTranslate(
+            api_key, filtered_sent, source_language, target_language
+        )
+    if translator == "Bing":
+        return translate.BingTranslate(
+            api_key, filtered_sent, source_language, target_language
+        )
     if translator == "Youdao":
-        return translate.YoudaoTranslate(filtered_sent, source_language, target_language)
+        return translate.YoudaoTranslate(
+            filtered_sent, source_language, target_language
+        )
+    if translator == "DeepL":
+        return translate.DeepLTranslate(filtered_sent, source_language, target_language)
+
+    return {}
 
 
 def gen_error(setname, datasetAfter, target_sentences, filename):
@@ -82,16 +111,20 @@ def gen_error(setname, datasetAfter, target_sentences, filename):
     save_path = filename
     wb.save(save_path)
 
+
 time1 = time.time()
-##语句生成
 datasetAfter, notimport = gen.gen_all(setName)
 
-##翻译
-target_sentences_google = collect_target_sentences("Google", datasetAfter,
-                                                   google_source_language, google_target_language)
-target_sentences_bing = collect_target_sentences("Bing", datasetAfter,
-                                                 bing_source_language, bing_target_language,
-                                                 bing_translate_api_key)
+target_sentences_google = collect_target_sentences(
+    "Google", datasetAfter, google_source_language, google_target_language
+)
+target_sentences_bing = collect_target_sentences(
+    "Bing",
+    datasetAfter,
+    bing_source_language,
+    bing_target_language,
+    bing_translate_api_key,
+)
 # target_sentences_youdao = collect_target_sentences("Youdao",datasetAfter,youdao_source_language,youdao_target_language)
 gen_error(setName, datasetAfter, target_sentences_google, setName + "_google.xlsx")
 gen_error(setName, datasetAfter, target_sentences_bing, setName + "_bing.xlsx")

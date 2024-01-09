@@ -1,8 +1,10 @@
 """
 剪枝
 """
-from commonApi import *
+import copy
 import common
+import commonApi
+
 
 def pruning(dependency_tree, root, dependencies, token, tokens_remain, s):
     """
@@ -28,32 +30,68 @@ def pruning(dependency_tree, root, dependencies, token, tokens_remain, s):
         for node in nodes:
             index = node.identifier
             tag = node.data.type
-            if common.relationship.get(tag, -10) == 1 or common.relationship.get(tag, -10) == -10 or common.relationship.get(tag, -10) == 3:
+            if (
+                common.relationship.get(tag, -10) == 1
+                or common.relationship.get(tag, -10) == -10
+                or common.relationship.get(tag, -10) == 3
+            ):
                 if len(dependency_tree.children(index)) > 0:
-                    s, tokens_remain = pruning(dependency_tree, index, dependencies, token, tokens_remain, s)
+                    s, tokens_remain = pruning(
+                        dependency_tree,
+                        index,
+                        dependencies,
+                        token,
+                        tokens_remain,
+                        s,
+                    )
             elif common.relationship.get(tag, -10) == 4:
                 return s, tokens_remain
             elif common.relationship.get(tag, -10) == 0:
                 if len(dependency_tree.children(index)) > 0:
-                    s, tokens_remain = pruning(dependency_tree, index, dependencies, token, tokens_remain, s)
+                    s, tokens_remain = pruning(
+                        dependency_tree,
+                        index,
+                        dependencies,
+                        token,
+                        tokens_remain,
+                        s,
+                    )
                     # 对子树进行剪枝之后
                     if len(dependency_tree.children(index)) >= 0:
-                        cut_subtree_from_dependency_tree(dependency_tree, index, tokens_remain, dependencies, token)
+                        cut_subtree_from_dependency_tree(
+                            dependency_tree,
+                            index,
+                            tokens_remain,
+                            dependencies,
+                            token,
+                        )
                 # 如果不需要保留
-                elif not should_retain(index):
-                    cut_subtree_from_dependency_tree(dependency_tree, index, tokens_remain, dependencies, token)
+                elif not commonApi.should_retain(index):
+                    cut_subtree_from_dependency_tree(
+                        dependency_tree,
+                        index,
+                        tokens_remain,
+                        dependencies,
+                        token,
+                    )
     else:
         tag = dependency_tree.nodes[root].data.type
         index = dependency_tree.nodes[root].identifier
-        if common.relationship.get(tag, -10) == 0 and not should_retain(index):
-            s = cut_subtree_from_dependency_tree(dependency_tree, index, tokens_remain, dependencies, token)
+        if common.relationship.get(tag, -10) == 0 and not commonApi.should_retain(
+            index
+        ):
+            s = cut_subtree_from_dependency_tree(
+                dependency_tree, index, tokens_remain, dependencies, token
+            )
             return s, tokens_remain
         else:
             pass
     return s, tokens_remain
 
 
-def cut_subtree_from_dependency_tree(dependency_tree, index, tokens_remain, dependencies, token):
+def cut_subtree_from_dependency_tree(
+    dependency_tree, index, tokens_remain, dependencies, token
+):
     """
 
     :param dependency_tree: 依赖关系树
@@ -74,7 +112,7 @@ def cut_subtree_from_dependency_tree(dependency_tree, index, tokens_remain, depe
     temp_tree = copy.deepcopy(dependency_tree)
     common.remove_tree_dist[index] = temp_tree
     # 生成剪枝后的句子
-    s = token_to_sentence(token, tokens_remain)
+    s = commonApi.token_to_sentence(token, tokens_remain)
     s = s.replace("  ", " ")
     common.sentences_gen.append(s)
     return s
