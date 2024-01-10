@@ -218,10 +218,7 @@ def gen_all(dataset):
     dic = {}
     str_list = []
 
-    workbook = openpyxl.load_workbook(
-        "./data/original_sentences/News.xlsx"
-    )  # 返回一个workbook数据类型的值
-    # print(workbook.sheetnames)  # 打印Excel表中的所有表
+    workbook = openpyxl.load_workbook("./data/News.xlsx")
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "./gcd.json"  # 凭据
     for name in workbook.sheetnames:
         if name != dataset:

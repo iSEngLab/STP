@@ -1,8 +1,11 @@
-import copy
 from typing import Any
+import copy
+
+import treelib.exceptions
 
 import common
 import nltk.tree as tree
+
 from treelib import Tree as Tr
 
 
@@ -209,7 +212,10 @@ def construct_dependency_tree(dependency, token):
         i, begin, end = dependency_parse_item
         if begin == 0:
             root = end
-            t.create_node(token[end - 1], end, data=Node(i, 0, token[end - 1]))
+            try:
+                t.create_node(token[end - 1], end, data=Node(i, 0, token[end - 1]))
+            except treelib.exceptions.MultipleRootError:
+                continue
             continue
         elif t.contains(begin):
             t.create_node(
@@ -224,11 +230,11 @@ class IndexTree(tree.Tree):
     def __init__(
         self,
         node,
-        indexes: list[Any],
         children: Any = None,
+        indexes: list[Any] | None = None,
     ):
         super().__init__(node, children)
-        self.indexes: list[Any] = indexes
+        self.indexes: list[Any] | None = indexes
 
     def __deepcopy__(self, memo):
         return type(self).convert(self)

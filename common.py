@@ -3,11 +3,11 @@ import string
 from nltk import TreebankWordDetokenizer
 from stanfordcorenlp import StanfordCoreNLP
 
-stanford_nlp_path = r"/root/stanford-corenlp-4.1.0"
+stanford_nlp_path = "./stanford-corenlp-4.5.5"
 nlpEN = StanfordCoreNLP(stanford_nlp_path)
 nlpCN = StanfordCoreNLP(stanford_nlp_path, lang="zh")
 de_tokenizer = TreebankWordDetokenizer()
-punctuation_en = string.punctuation  # 字符串的标点符号
+punctuation_en = string.punctuation
 
 """global variable"""
 clauses_tokens = []

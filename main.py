@@ -1,13 +1,14 @@
+import os
 import time
 from typing import Any
 import openpyxl
 import common
 import gen
 import translate
+import pickle
 
 # coreNLP放置位置
 
-nlp_cn = common.nlpCN
 nlp_en = common.nlpEN
 # 数据集名称
 setList = [
@@ -24,70 +25,41 @@ setList = [
     "Business_Old",
     "Politics_Old",
 ]
-setName = setList[9]
-dataset = "./data/original_sentences/" + setName
+setName = "Tech"
+dataset = "./data/" + setName
 thod = 0.7
 # Bing Translate
 bing_translate_api_key = ""
 google_translate_api_key = ""
 # bing target language: Chinese
-bing_source_language = "en"
-bing_target_language = "zh"
-# Google target language: zh
-google_source_language = "en"
-google_target_language = "zh-cn"
-# Youdao Target Language：
-youdao_source_language = "en"
-youdao_target_language = "zh"
+source_language = "en"
+target_language = "ro"
 
 
 def collect_target_sentences(
     translator: str,
     filtered_sent: dict[str, Any],
-    source_language: str,
-    target_language: str,
-    api_key: str | None = None,
+    source_lang: str,
+    target_lang: str,
 ) -> dict[str, Any]:
     """
-    收集翻译语句结果
-    :param translator: 翻译器选择
-    :param filtered_sent: 需要翻译的句子
-    :param source_language: 原语句
-    :param target_language: 目标语句
-    :param api_key: 与翻译器交互的API Key
-    :return: 需要翻译句子的字典
+    :param translator
+    :param filtered_sent
+    :param source_language
+    :param target_language
     """
     """Return Translation dic for a translator"""
     if translator == "Google":
-        return translate.GoogleTranslate(
-            api_key, filtered_sent, source_language, target_language
-        )
+        return translate.GoogleTranslate(filtered_sent, source_lang, target_lang)
     if translator == "Bing":
-        return translate.BingTranslate(
-            api_key, filtered_sent, source_language, target_language
-        )
-    if translator == "Youdao":
-        return translate.YoudaoTranslate(
-            filtered_sent, source_language, target_language
-        )
+        return translate.BingTranslate(filtered_sent, source_lang, target_lang)
     if translator == "DeepL":
-        return translate.DeepLTranslate(filtered_sent, source_language, target_language)
+        return translate.DeepLTranslate(filtered_sent, target_lang)
 
     return {}
 
 
 def gen_error(setname, datasetAfter, target_sentences, filename):
-    """
-    生成错误结果
-    :param datasetAfter:
-    :param target_sentences:
-    :param nlpCN: Stanford CoreNlp 中文对象
-    :param nlpEN:  Stanford CoreNlp 英文对象
-    :param thod: 阈值
-    :param filename:  读取扩增文件地址
-    :return: 返回原语句：扩增语句的字典
-    """
-
     wb = openpyxl.Workbook()
     ws = wb.create_sheet(setname)
     ws.append([])
@@ -95,16 +67,22 @@ def gen_error(setname, datasetAfter, target_sentences, filename):
 
     ii = 0
     for sent in datasetAfter:
-        tranSl = target_sentences[sent]
+        try:
+            tranSl = target_sentences[sent]
+        except Exception:
+            break
         ws.append(["issue: " + str(ii)])
-        ws.append(["原句："])
+        ws.append(["Original sentence:"])
         ws.append([sent])
         ws.append([tranSl])
         ii = ii + 1
-        ws.append(["目的句："])
+        ws.append(["Purpose sentence:"])
 
         for new in datasetAfter[sent]:
-            tranCl = target_sentences[new]
+            try:
+                tranCl = target_sentences[new]
+            except Exception:
+                break
             ws.append([new])
             ws.append([tranCl])
         ws.append([])
@@ -113,23 +91,64 @@ def gen_error(setname, datasetAfter, target_sentences, filename):
 
 
 time1 = time.time()
-datasetAfter, notimport = gen.gen_all(setName)
+if not os.path.exists(f"datasetAfter_{setName}.pkl"):
+    datasetAfter, notimport = gen.gen_all(setName)
 
-target_sentences_google = collect_target_sentences(
-    "Google", datasetAfter, google_source_language, google_target_language
-)
-target_sentences_bing = collect_target_sentences(
-    "Bing",
-    datasetAfter,
-    bing_source_language,
-    bing_target_language,
-    bing_translate_api_key,
-)
+    with open(f"datasetAfter_{setName}.pkl", "wb") as f:
+        pickle.dump(datasetAfter, f)
+    with open(f"notimport_{setName}.pkl", "wb") as f:
+        pickle.dump(notimport, f)
+
+with open(f"datasetAfter_{setName}.pkl", "rb") as f:
+    datasetAfter = pickle.load(f)
+with open(f"notimport_{setName}.pkl", "rb") as f:
+    notimport = pickle.load(f)
+
+if not os.path.exists(f"target_sentences_google_{setName}.pkl"):
+    target_sentences_google = collect_target_sentences(
+        "Google",
+        datasetAfter,
+        source_language,
+        target_language,
+    )
+    with open(f"target_sentences_google_{setName}.pkl", "wb") as f:
+        pickle.dump(target_sentences_google, f)
+
+if not os.path.exists(f"target_sentences_bing_{setName}.pkl"):
+    target_sentences_bing = collect_target_sentences(
+        "Bing",
+        datasetAfter,
+        source_language,
+        target_language,
+    )
+    with open(f"target_sentences_bing_{setName}.pkl", "wb") as f:
+        pickle.dump(target_sentences_bing, f)
+
+if not os.path.exists(f"target_sentences_deepl_{setName}.pkl"):
+    target_sentences_deepl = collect_target_sentences(
+        "DeepL",
+        datasetAfter,
+        source_language,
+        target_language,
+    )
+    with open(f"target_sentences_deepl_{setName}.pkl", "wb") as f:
+        pickle.dump(target_sentences_deepl, f)
+
+
+with open(f"target_sentences_google_{setName}.pkl", "rb") as f:
+    target_sentences_google = pickle.load(f)
+
+with open(f"target_sentences_bing_{setName}.pkl", "rb") as f:
+    target_sentences_bing = pickle.load(f)
+
+with open(f"target_sentences_deepl_{setName}.pkl", "rb") as f:
+    target_sentences_deepl = pickle.load(f)
+
 # target_sentences_youdao = collect_target_sentences("Youdao",datasetAfter,youdao_source_language,youdao_target_language)
 gen_error(setName, datasetAfter, target_sentences_google, setName + "_google.xlsx")
 gen_error(setName, datasetAfter, target_sentences_bing, setName + "_bing.xlsx")
+gen_error(setName, datasetAfter, target_sentences_deepl, setName + "_deepl.xlsx")
 # genError(setName,datasetAfter,target_sentences_youdao,setName+"_youdao.xlsx")
-nlp_cn.close()
 nlp_en.close()
 time2 = time.time()
 total_cost = time2 - time1

@@ -17,7 +17,7 @@ ssss = [
     "Opinion",
 ]
 software = ["Google", "Bing"]
-workbook = openpyxl.load_workbook("News.xlsx")  # 返回一个workbook数据类型的值
+workbook = openpyxl.load_workbook("./data/News.xlsx")
 origin_source_sentsL = []
 
 for name in workbook.sheetnames:
@@ -40,8 +40,8 @@ RTIGoogleList = []
 RTIBingList = []
 
 
-nlpCN = StanfordCoreNLP(r"D:\share\stanford-corenlp-4.1.0", lang="zh")
-nlpEN = StanfordCoreNLP(r"D:\share\stanford-corenlp-4.1.0")
+nlpCN = StanfordCoreNLP(r"./stanford-corenlp-4.5.5", lang="zh")
+nlpEN = StanfordCoreNLP(r"./stanford-corenlp-4.5.5")
 
 
 class Pair:

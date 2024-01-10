@@ -27,3 +27,9 @@ htmlcov/
 *.qcow2
 *.qcow2c
 *.png
+
+stanford*/
+results_*/
+*.pkl
+*.xlsx
+*.txt

@@ -20,7 +20,7 @@ Machine Translation Testing via Syntactic Tree Pruning
 
 ```sh
 rm -rf venv-stp
-python3.12 -m venv venv-stp
+python3.11 -m venv venv-stp
 
 source venv-stp/bin/activate
 python -m pip install --upgrade pip
@@ -32,6 +32,49 @@ pip install --force-reinstall -r requirements.txt
 ```sh
 pre-commit install
 ```
+
+# To install google-cloud-cli
+
+```sh
+sudo tee -a /etc/yum.repos.d/google-cloud-sdk.repo << EOM
+[google-cloud-cli]
+name=Google Cloud CLI
+baseurl=https://packages.cloud.google.com/yum/repos/cloud-sdk-el9-x86_64
+enabled=1
+gpgcheck=1
+repo_gpgcheck=0
+gpgkey=https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+EOM
+```
+
+```sh
+sudo dnf install google-cloud-cli
+```
+
+# Obtain API KEY
+
+## for google
+
+A Google Cloud account is required.
+Link for re: https://cloud.google.com/translate/docs/reference/rest
+
+```sh
+gcloud init
+```
+
+```sh
+gcloud auth application-default print-access-token
+```
+
+## for Microsoft
+
+An Azure account is required. Need to add a `free` service for cognitive services: Translator. Then go to KEYS and take the key from there. (2M chars of any combination of standard translation and custom training free per month)
+Link for re: https://learn.microsoft.com/en-us/azure/ai-services/translator/
+
+## for DeepL
+
+An DeepL account is required. Add free plan (500k characters / month)
+Link for re: https://www.deepl.com/docs-api
 
 ## Install Requested Python Packages
 
