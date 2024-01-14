@@ -42,13 +42,14 @@ def collect_target_sentences(
     source_lang: str,
     target_lang: str,
 ) -> dict[str, Any]:
+    """Returns Translation dictionary for a translator.
+
+    Args:
+        translator:
+        filtered_sent:
+        source_language:
+        target_language:
     """
-    :param translator
-    :param filtered_sent
-    :param source_language
-    :param target_language
-    """
-    """Return Translation dic for a translator"""
     if translator == "Google":
         return translate.GoogleTranslate(filtered_sent, source_lang, target_lang)
     if translator == "Bing":

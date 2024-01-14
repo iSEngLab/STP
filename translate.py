@@ -109,12 +109,14 @@ def BingTranslate(filtered_sent, language_from, language_to):
 
 
 def GoogleTranslate(filtered_sent, source_language, target_language):
-    """Google Translate, visit https://cloud.google.com/translate/docs to know pre-requisites
-    Arguments:
-    filtered_sent = dictionary of original sentence to list of filtered sentences
-    source_language = Source language code_ls
-    target_language = Target language code_ls
-    returns translation dictionary from source sentence to target sentence
+    """Returns Google Translate translator. Visit https://cloud.google.com/translate/docs to know pre-requisites.
+
+    Args:
+        filtered_sent: dictionary of original sentence to list of filtered sentences
+        source_language: Source language code_ls
+        target_language: Target language code_ls
+    Returns:
+        translation dictionary from source sentence to target sentence
     """
     google_api_key = "AIzaSyBeebtYCCTfS71EKL4MzhzaM_DkCZpl1Uk"
 
@@ -174,11 +176,13 @@ def GoogleTranslate(filtered_sent, source_language, target_language):
 
 
 def DeepLTranslate(filtered_sent, target_language):
-    """DeepL Translate,
-    Arguments:
-    filtered_sent = dictionary of original sentence to list of filtered sentences
-    target_language = Target language code_ls
-    returns translation dictionary from source sentence to target sentence
+    """Returns DeepL Translate translator.
+
+    Args:
+        filtered_sent: dictionary of original sentence to list of filtered sentences
+        target_language: Target language code_ls
+    Returns:
+        translation dictionary from source sentence to target sentence
     """
     url = "https://api.deepl.com/v2/translate"
     # 读取

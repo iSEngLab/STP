@@ -1,3 +1,5 @@
+"""Provide various utility operations for processing and manipulating linguistic 
+structures, such as trees and sentences."""
 from typing import Any
 import copy
 
@@ -6,22 +8,23 @@ import treelib.exceptions
 import common
 import nltk.tree as tree
 
-from treelib import Tree as Tr
+from treelib import Tree
 
 
 def replace_clause(token, clause_to_replace, replace_word):
     """
-    删除从句，添加替换词，生成新句子
-    :param token: 原句token序列
-    :param replace_word:从句替换词
-    :param clause_to_replace: 从句
-    :return: 从句被替换后的生成句
+    Replaces a clause in a sentence with a specified replacement word.
+    :param token: original sentence token sequence
+    :param replace_word: clause replacement word
+    :param clause_to_replace: clause
+    :return: the generated sentence after the clause is replaced
     """
     clause_tokens = common.nlpEN.word_tokenize(clause_to_replace)
     tokens_after_replacement = copy.deepcopy(token)
 
     replace_index = -1
-    # 在原句token序列中寻找和从句token序列匹配的子序列
+    # Search the original sentence token sequence for a subsequence that matches the
+    # clause token sequence.
     for i in range(0, len(token) - len(clause_tokens) + 1):
         index = 0
         while index < len(clause_tokens):
@@ -31,10 +34,10 @@ def replace_clause(token, clause_to_replace, replace_word):
         if index == len(clause_tokens):
             replace_index = i
             break
-    # 没有找到
+    # Token was not found.
     if replace_index < 0:
         return common.de_tokenizer.detokenize(token)
-    # 替换从句
+    # Replacement clause
     tokens_after_replacement = (
         tokens_after_replacement[:replace_index]
         + [replace_word]
@@ -49,7 +52,8 @@ def replace_clause(token, clause_to_replace, replace_word):
 
 def remove_clause_tokens(clause, token):
     """
-    删除从句token
+    Removes tokens corresponding to a given clause from a list of tokens.
+
     :param clause: 删除部分token列表
     :param token: 全部token列表
     :return: 删除部分token index
@@ -70,6 +74,8 @@ def remove_clause_tokens(clause, token):
 
 def token_to_sentence(token, remain_token_indexes):
     """
+    Generates a new sentence based on a list of tokens and the indices of tokens to be retained.
+
     根据需要保留的tokens生成新的句子
     :param token: token列表
     :param remain_token_indexes: 需要保留token index
@@ -81,6 +87,8 @@ def token_to_sentence(token, remain_token_indexes):
 
 def cons_traversal(t):
     """
+    Traverses a constituency tree to identify and split clauses.
+
     子句识别，拆分 判断
     :param t: 成分树
     :return:
@@ -109,6 +117,8 @@ def cons_traversal(t):
 
 def should_retain(index):
     """
+    Determines whether a given token index should be retained.
+
     判断是否需要保留
     :param index: token index
     :return: 判断结果
@@ -122,6 +132,8 @@ def should_retain(index):
 
 def find_right_index(dependency, index):
     """
+    Finds the rightmost node with a given index in a dependency tree.
+
     寻找以index为根的最右节点，用于切分子句
     :param dependency:
     :param index:
@@ -145,6 +157,8 @@ def find_right_index(dependency, index):
 
 def find_inseparable(token):
     """
+    Finds the indices of tokens that correspond to inseparable words or phrases.
+
     寻找需要保留的不可分词index
     :param token: token字符
     :return: 保留index列表
@@ -170,6 +184,8 @@ def find_inseparable(token):
 
 def dependency_traversal(dependency_tree, token, trunk):
     """
+    Retains the main components of a dependency tree.
+
     保留主干成分
     :param dependency_tree: 依存树
     :param token: token列表
@@ -186,6 +202,8 @@ def dependency_traversal(dependency_tree, token, trunk):
 
 
 class Node:
+    """Represents a node in a dependency tree with information such as type, flag, and word."""
+
     def __init__(self, t, flag=0, word=""):
         self.type = t
         self.flag = flag
@@ -194,6 +212,8 @@ class Node:
 
 def construct_dependency_tree(dependency, token):
     """
+    Constructs a dependency tree from a list of dependency relationships and tokens.
+
     构建 dependency tree
     :param dependency: 依存关系元组
     :param token: 分词结果列表
@@ -201,7 +221,7 @@ def construct_dependency_tree(dependency, token):
     """
     dependency_parse = copy.deepcopy(dependency)
     token = copy.deepcopy(token)
-    t = Tr()
+    t = Tree()
     root = -1
 
     # 构建依存树
@@ -227,6 +247,8 @@ def construct_dependency_tree(dependency, token):
 
 
 class IndexTree(tree.Tree):
+    """Subclass of tree.Tree with additional functionality for handling indexes."""
+
     def __init__(
         self,
         node,
@@ -334,6 +356,8 @@ def constituent_tree_with_indexes(constituent_tree: IndexTree | Any, start_index
 
 def read_conf(p="./related-documentation/Relationship"):
     """
+    Reads a configuration file containing information about relationship types.
+
     读取配置文件
     :return:
     """
@@ -347,23 +371,24 @@ def read_conf(p="./related-documentation/Relationship"):
     f.close()
 
 
-def is_invert_wh_structure(sbar):
+def is_invert_wh_structure(phrase_tree):
     """
-    宾语前置句
-    :param sbar: 从句短语树
-    :return:
+    Determines whether a given clause (represented as a tree structure) follows the
+    pattern of an inverted WH structure.
     """
-    if len(sbar) < 2:
+    if len(phrase_tree) < 2:
         return False
-    return sbar[0].label() == "WHNP" and is_sp_structure(sbar[1])
+    # Checks if (1) the label of the first node is "WHNP" (WH Noun Phrase), which typically
+    # represents a WH-word (like "who," "what," etc.) in a subordinate clause
+    # and (2) if the second node conforms to the structure of a SP structure.
+    return phrase_tree[0].label() == "WHNP" and is_sp_structure(phrase_tree[1])
 
 
-def is_sp_structure(t):
+def is_sp_structure(phrase_tree):
     """
-    主谓结构
-    :param t: 短语树
-    :return:
+    Checks if given phrase tree structure represents a subject-predicate (Noun Phrase +
+    Verb Phrase) structure.
     """
-    if len(t) < 2:
+    if len(phrase_tree) < 2:
         return False
-    return t[0].label() == "NP" and t[1].label() == "VP"
+    return phrase_tree[0].label() == "NP" and phrase_tree[1].label() == "VP"
