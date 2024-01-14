@@ -5,7 +5,7 @@ from stanfordcorenlp import StanfordCoreNLP
 
 stanford_nlp_path = "./stanford-corenlp-4.5.5"
 nlpEN = StanfordCoreNLP(stanford_nlp_path)
-nlpCN = StanfordCoreNLP(stanford_nlp_path, lang="zh")
+# nlpCN = StanfordCoreNLP(stanford_nlp_path, lang="zh")
 de_tokenizer = TreebankWordDetokenizer()
 punctuation_en = string.punctuation
 

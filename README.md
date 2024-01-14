@@ -27,6 +27,8 @@ python -m pip install --upgrade pip
 pip install --force-reinstall -r requirements.txt
 ```
 
+or use `pip install --ignore-installed -r requirements.txt` if you wish to ignore the installed packages.
+
 Note: 
 If using the latest Python version (namely 3.12, as per mid-January), it may not yet be supported for Pytorch, thus the installation would fail. The solution would be to downgrade Python. For easier Python version management, [`pyenv`](https://github.com/pyenv/pyenv) allows to switch between multiple Python versions: `pyenv local 3.11.7`, then allowing to run `pyenv exec python -m venv venv-stp` using the desired version.
 

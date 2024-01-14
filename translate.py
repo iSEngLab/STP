@@ -3,24 +3,34 @@ import time
 import uuid
 import os
 
+from typing import Any
+
 
 os.environ[
     "GOOGLE_APPLICATION_CREDENTIALS"
 ] = "/home/ioachimlihor/.config/gcloud/application_default_credentials.json"
 
 
-def BingTranslate(filtered_sent, language_from, language_to):
-    """Bing Microsoft translator
+def BingTranslate(filtered_sent: dict[str, Any], language_from: str, language_to: str):
+    """Translates a given dictionary of original sentences to lists of filtered
+    sentences from one language to another, using Bing Microsoft Translate API.
+    Caches translations in a dictionary (dict_name) to avoid redundant API calls.
+    Writes the cached dictionary to a file (temp_bing.txt) for persistence across script
+    executions.
+
     If you encounter any issues with the base_url or path, make sure
     that you are using the latest endpoint:
     https://docs.microsoft.com/azure/cognitive-services/translator/reference/v3-0-translate
-    Arguments:
-    api_key = Bing Microsoft Translate API key
-    filtered_sent = dictionary of original sentence to list of filtered sentences
-    language_from = Source language code_ls
-    language_to = Target language code_ls
-    returns translation dictionary from source sentence to target sentence
+
+    Args:
+        filtered_sent: dictionary of original sentence to list of filtered sentences
+        language_from: Source language code_ls
+        language_to: Target language code_ls
+
+    Returns:
+        translation dictionary from source sentence to target sentence
     """
+    # Declare Bing Microsoft Translate API key.
     bing_api_key = "8a3ac4d9c987447790443ec9024496b2"
 
     dict_name = {}
@@ -108,8 +118,16 @@ def BingTranslate(filtered_sent, language_from, language_to):
     return translation_dic
 
 
-def GoogleTranslate(filtered_sent, source_language, target_language):
-    """Returns Google Translate translator. Visit https://cloud.google.com/translate/docs to know pre-requisites.
+def GoogleTranslate(
+    filtered_sent: dict[str, Any], source_language: str, target_language: str
+):
+    """Translates a given dictionary of original sentences to lists of filtered
+    sentences from one language to another, using Google Translate API.
+    Caches translations in a dictionary (dict_name) to avoid redundant API calls.
+    Writes the cached dictionary to a file (temp_google.txt) for persistence across
+    script executions.
+
+    Visit https://cloud.google.com/translate/docs to know pre-requisites.
 
     Args:
         filtered_sent: dictionary of original sentence to list of filtered sentences
@@ -121,7 +139,6 @@ def GoogleTranslate(filtered_sent, source_language, target_language):
     google_api_key = "AIzaSyBeebtYCCTfS71EKL4MzhzaM_DkCZpl1Uk"
 
     url = "https://translation.googleapis.com/language/translate/v2"
-    # 读取
     dict_name = {}
     with open("temp_google.txt", "r", encoding="utf-8") as fp:
         a = fp.read()
@@ -175,8 +192,12 @@ def GoogleTranslate(filtered_sent, source_language, target_language):
     return translation_dic
 
 
-def DeepLTranslate(filtered_sent, target_language):
-    """Returns DeepL Translate translator.
+def DeepLTranslate(filtered_sent: dict[str, Any], target_language: str):
+    """Translates a given dictionary of original sentences to lists of filtered
+    sentences from one language to another, using DeepL Translate API.
+    Caches translations in a dictionary (dict_name) to avoid redundant API calls.
+    Writes the cached dictionary to a file (temp_deepl.txt) for persistence across
+    script executions.
 
     Args:
         filtered_sent: dictionary of original sentence to list of filtered sentences
@@ -185,7 +206,6 @@ def DeepLTranslate(filtered_sent, target_language):
         translation dictionary from source sentence to target sentence
     """
     url = "https://api.deepl.com/v2/translate"
-    # 读取
     dict_name = {}
     with open("temp_deepl.txt", "r", encoding="utf-8") as fp:
         a = fp.read()

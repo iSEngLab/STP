@@ -1,5 +1,5 @@
 """
-生成句子
+Handles generating sentences.
 """
 
 import copy
@@ -17,39 +17,42 @@ import openpyxl
 
 def gen(sentence):
     """
-    单个句子剪枝结果生成
-    :param sentence: 语句
-    :return: 扩增结果
+    Takes a sentence as input, performs sentence pruning and returns the result.
+
+    Tokenizes the input sentence, identifies the main and subordinate clauses, and
+    prunes unnecessary parts. It handles cases where the sentence includes a colon by
+    splitting it into two parts and recursively processing them.
+    The corrected sentences are stored in the common.sentences_gen list.
     """
     sentence = correct_punctuation(sentence)
     token = common.nlpEN.word_tokenize(sentence)
-    # 切分句子为主句和从句
+    # Split sentences into main clauses and subordinate clauses.
     sent_main, sent_clauses = find_clauses(sentence)
 
-    # 存在主句
-    if len(sent_main) != 0:
+    if len(sent_main) != 0:  # If main clause exists
         if sent_main[0] == "," or sent_main[0] == ".":
             sent_main = sent_main[1 : len(sent_main)]
-        # 主句直接添加为生成句
+
         if len(sent_clauses) != 0:
+            # The main clause is directly added as a generated sentence.
             common.sentences_gen.append(sent_main)
         token_main = common.nlpEN.word_tokenize(sent_main)
         dependency_main = common.nlpEN.dependency_parse(sent_main)
         # dependency_main_enhancep = common.nlpEN.dependency_parse_enhancep(sent_main)
-        # 寻找主句中需要保留的部分
+        # Find the part of the main clause that needs to be retained.
         common.retain_tokens.clear()
         common.retain_tokens = commonApi.find_inseparable(token_main)
-        # 识别主干内容
+        # Identify the main content.
         common.trunk.clear()
         commonApi.dependency_traversal(dependency_main, token_main, common.trunk)
-        # 识别主句中的并列成分
+
         cc_list = cc_part(
             dependency_main,
             commonApi.IndexTree.fromstring(common.nlpEN.parse(sent_main)),
         )
         # 主句无并列
         if len(cc_list) == 0:
-            # 构建依存关系树
+            # Build dependency tree.
             dependency_tree_main, root = commonApi.construct_dependency_tree(
                 dependency_main, token_main
             )
@@ -77,7 +80,7 @@ def gen(sentence):
                 # 识别并列句中的主干内容
                 common.trunk.clear()
                 commonApi.dependency_traversal(dependency_cc, token_cc, common.trunk)
-                # 构建依存关系树
+                # Build dependency tree.
                 dependency_tree_cc, root = commonApi.construct_dependency_tree(
                     dependency_cc, token_cc
                 )
@@ -91,7 +94,7 @@ def gen(sentence):
                     sent_cc,
                 )
 
-    # 对从句进行处理，步骤与主句相同
+    # Process the subordinate clause, the steps are the same as for the main clause.
     for sent_clause in sent_clauses:
         common.sentences_gen.append(sent_clause)
         common.trunk.clear()
@@ -159,34 +162,32 @@ def gen(sentence):
     return result3
 
 
-def correct_punctuation(sentence: str):
+def correct_punctuation(sentence: str) -> str:
     """
-    修正标点符号
-    :param sentence:
-    :return:
+    Corrects punctuation in given sentence and returns the obtained sentence.
     """
     punc_pattern = re.compile("[,.]{2,}")
     s = sentence
-    # 加句号
+    # Add period.
     if not s.endswith('."') and not s.endswith("."):
         s += "."
 
-    # 去除多个标点
+    # Remove multiple punctuation marks.
     result = re.search(punc_pattern, s)
     while result is not None:
         span = result.span()
-        # 在句首直接去除
         if span[0] == 0:
+            # Remove the symbol from the beginning of the sentence.
             s = s[span[1] :]
-        # 在句末保留最后一个
         elif span[1] == len(s):
+            # Only keep the last appearance, at the end of the sentence.
             s = s[: span[0]] + s[-1]
-        # 在句中保留第一个
         else:
+            # Keep the first appearance in the sentence.
             s = s[: span[0] + 1] + s[span[1] :]
         result = re.search(punc_pattern, s)
 
-    # 删除未能匹配成对的双引号
+    # Remove unmatched double quotes.
     last_index_quote_mark = s.find('"', 0)
     quote_mark = 1
     while last_index_quote_mark >= 0:
@@ -199,19 +200,16 @@ def correct_punctuation(sentence: str):
         else:
             quote_mark += 1
 
-    # 去除开头的标点
+    # Remove leading punctuation.
     while len(s) > 0 and (s[0] == "." or s[0] == ","):
         s = s[1:]
 
     return s.strip()
 
 
-# 生成所有数据
-def gen_all(dataset):
+def gen_all(dataset_path: str):
     """
-    数据集数据生成
-    :param dataset: 数据集path
-    :return:
+    Generates pruned sentences for a given dataset (all data).
     """
     commonApi.read_conf()
     nlp_en = common.nlpEN
@@ -221,7 +219,7 @@ def gen_all(dataset):
     workbook = openpyxl.load_workbook("./data/News.xlsx")
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "./gcd.json"  # 凭据
     for name in workbook.sheetnames:
-        if name != dataset:
+        if name != dataset_path:
             continue
         sheet = workbook[name]  # 获取指定sheet表
         sheet_len = eval(sheet.dimensions.split("B")[1])

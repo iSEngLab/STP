@@ -1,4 +1,4 @@
-"""Provide various utility operations for processing and manipulating linguistic 
+"""Provides various utility operations for processing and manipulating linguistic 
 structures, such as trees and sentences."""
 from typing import Any
 import copy
