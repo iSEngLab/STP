@@ -12,29 +12,29 @@ import common
 
 def find_clauses(sent):
     """
-    识别从句
-    :param sent:
-    :return:
+    Identify clauses.
     """
-    t = tree.Tree.fromstring(common.nlpEN.parse(sent))  # 生成短语结构树
+    # Generate phrase structure tree.
+    t = tree.Tree.fromstring(common.nlpEN.parse(sent))
     common.clauses_tokens.clear()
     common.sentences_gen.clear()
     parent_tree = ParentedTree.convert(t)
-    # 主语从句：
+    # Subject clause.
     s_clause, s_sentence, s_add_sentence = find_subject_clause(parent_tree)
 
-    # 表语从句：
+    # Predicative clause.
     parent_tree = ParentedTree.convert(t)
     t_clause, t_sentence, t_add_sentence = find_predicative_clause(parent_tree)
 
-    # 其他名词性从句：
+    # Other noun clauses.
     parent_tree = ParentedTree.convert(t)
     d_clause, d_sentence, d_add_sentence = find_other_clause(parent_tree)
 
     result = []
-    token = common.nlpEN.word_tokenize(sent)
+    tokens = common.nlpEN.word_tokenize(sent)
 
-    # 由于从句可能出现包含关系，这里为了能够最大程度去除从句，因而按照长度从长到短依次去除从句
+    # Since clauses may have an inclusion relationship, in order to remove as much
+    # as possible, the clauses are removed in order from longest to shortest in length.
     s_t_d = [
         (s_clause, s_sentence, s_add_sentence),
         (t_clause, t_sentence, t_add_sentence),
@@ -48,17 +48,17 @@ def find_clauses(sent):
             clause_de_tokenize = clause_de_tokenize + "."
             result.append(clause_de_tokenize)
             sent = commonApi.replace_clause(
-                token, sentence_de_tokenize, s_t_d_add_sentence
+                tokens, sentence_de_tokenize, s_t_d_add_sentence
             )
-            token = common.nlpEN.word_tokenize(sent)
+            tokens = common.nlpEN.word_tokenize(sent)
 
     source_tree = tree.Tree.fromstring(common.nlpEN.parse(sent))
     clauses_local = []
     common.clauses_tokens.clear()
     common.sentences_gen.clear()
     clauses_remain_tokens = []
-    token = common.nlpEN.word_tokenize(sent)
-    main_remain_token_indexes = [i for i in range(len(token))]  # 主句保留的token index
+    tokens = common.nlpEN.word_tokenize(sent)
+    main_remain_token_indexes = [i for i in range(len(tokens))]  # 主句保留的token index
     # 对于从句的删除应该是连续的token
     commonApi.cons_traversal(source_tree)  # 识别不可拆组合词、从句
 
@@ -68,7 +68,7 @@ def find_clauses(sent):
         for i in range(len(common.clauses_tokens)):
             clause = " ".join(common.clauses_tokens[i])
             # 删除从句
-            remain_tokens = commonApi.remove_clause_tokens(clause, token)
+            remain_tokens = commonApi.remove_clause_tokens(clause, tokens)
             if clause[-1] != ".":
                 clause += "."
             clauses_remain_tokens.append(remain_tokens)
@@ -78,8 +78,8 @@ def find_clauses(sent):
     for clause_token in clauses_remain_tokens:
         for j in clause_token:
             main_remain_token_indexes.remove(j)
-    # 对主句进行处理：
-    sent_main = commonApi.token_to_sentence(token, main_remain_token_indexes)
+    # Process the main clause.
+    sent_main = commonApi.generate_subsentence(tokens, main_remain_token_indexes)
     clauses_local += result
     return sent_main, clauses_local
 

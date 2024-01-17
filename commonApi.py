@@ -72,16 +72,17 @@ def remove_clause_tokens(clause, token):
     return tokens_after_remove
 
 
-def token_to_sentence(token, remain_token_indexes):
+def generate_subsentence(tokens, remaining_tokens_indices):
     """
     Generates a new sentence based on a list of tokens and the indices of tokens to be retained.
 
-    根据需要保留的tokens生成新的句子
-    :param token: token列表
-    :param remain_token_indexes: 需要保留token index
-    :return: 新的子句
+    Args:
+        token: token list
+        remaining_tokens_indices: token indices needing to be retained
+    Returns:
+        new clause
     """
-    tokens = [token[i] for i in remain_token_indexes]
+    tokens = [tokens[i] for i in remaining_tokens_indices]
     return common.de_tokenizer.detokenize(tokens)
 
 

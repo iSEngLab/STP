@@ -31,8 +31,23 @@ def pruning(dependency_tree, root, dependencies, token, tokens_remain, sentence)
             index = node.identifier
             tag = node.data.type
             if (
+                # Relationship 1 refers to either of the following:
+                # dependent (dep)
+                # auxiliary verbs or copula (aux, auxpass, cop),
+                # clausal complement and open clausal complement (ccomp, xcomp),
+                # expletive (expl) - e.g. "there are", "here is" and "it is", "indeed", “in fact”
+                # determiner (det)
+                # multi-word expression (mwe)
+                # marker (mark)
+                # particle (prt)
+                # goes with (goeswith)
+                # case marker (case)
                 common.relationship.get(tag, -10) == 1
+                # No relationship.
                 or common.relationship.get(tag, -10) == -10
+                # Relationship 3 refers to either of the following:
+                # Object-related dependencies (obj, dobj, iobj)
+                # Subject-related dependencies (nsubj, csubj, xsubj)
                 or common.relationship.get(tag, -10) == 3
             ):
                 if len(dependency_tree.children(index)) > 0:
@@ -44,8 +59,13 @@ def pruning(dependency_tree, root, dependencies, token, tokens_remain, sentence)
                         tokens_remain,
                         sentence,
                     )
+            # punctuation (punct)
+            # parataxis
             elif common.relationship.get(tag, -10) == 4:
                 return sentence, tokens_remain
+            # adjectival clause modifier (acl)
+            # adverbial modifier (advmod)
+            # compound (compound)
             elif common.relationship.get(tag, -10) == 0:
                 if len(dependency_tree.children(index)) > 0:
                     sentence, tokens_remain = pruning(
@@ -56,7 +76,7 @@ def pruning(dependency_tree, root, dependencies, token, tokens_remain, sentence)
                         tokens_remain,
                         sentence,
                     )
-                    # 对子树进行剪枝之后
+                    # After pruning the subtree
                     if len(dependency_tree.children(index)) >= 0:
                         cut_subtree_from_dependency_tree(
                             dependency_tree,
@@ -65,7 +85,7 @@ def pruning(dependency_tree, root, dependencies, token, tokens_remain, sentence)
                             dependencies,
                             token,
                         )
-                # 如果不需要保留
+                # If there is no need to retain
                 elif not commonApi.should_retain(index):
                     cut_subtree_from_dependency_tree(
                         dependency_tree,
@@ -90,29 +110,34 @@ def pruning(dependency_tree, root, dependencies, token, tokens_remain, sentence)
 
 
 def cut_subtree_from_dependency_tree(
-    dependency_tree, index, tokens_remain, dependencies, token
+    dependency_tree, index, remaining_tokens_indices, dependencies, tokens
 ):
     """
+    Cuts a subtree from a dependency tree, updates the necessary data structures, and
+    generates a sentence from the modified tree structure.
 
-    :param dependency_tree: 依赖关系树
-    :param index: 需要剪掉的子树根节点index
-    :param tokens_remain: 需要保留的token index
-    :param dependencies: 依赖关系列表
-    :param token: 所有的token
-    :return:
+    Args:
+        dependency_tree: dependency tree
+        index: the index of the subtree root node that needs to be pruned
+        remaining_tokens_indices: list of indices for tokens that need to be retained
+        dependencies: list of dependencies
+        tokens: full list of tokens
     """
-    remove = dependency_tree.remove_subtree(index)
-    remove_node = remove.nodes
-    # 删除(依赖关系、token序列)
-    for i in remove_node:
-        tokens_remain.remove(i - 1)
+    # Store the removed subtree.
+    removed_subtree = dependency_tree.remove_subtree(index)
+    removed_nodes = removed_subtree.nodes
+    # Updates the list of remaining tokens by removing the indices of the nodes in the removed subtree.
+    for node in removed_nodes:
+        remaining_tokens_indices.remove(node - 1)
+    # Remove dependencies that involve the root of the removed subtree from the list of dependencies.
     for dependency in dependencies:
         if dependency[2] == index:
             dependencies.remove(dependency)
+
     temp_tree = copy.deepcopy(dependency_tree)
     common.remove_tree_dist[index] = temp_tree
-    # 生成剪枝后的句子
-    s = commonApi.token_to_sentence(token, tokens_remain)
+    # Generates a sentence (s) from the modified list of tokens.
+    s = commonApi.generate_subsentence(tokens, remaining_tokens_indices)
     s = s.replace("  ", " ")
     common.sentences_gen.append(s)
     return s

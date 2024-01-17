@@ -93,6 +93,9 @@ Link for re: https://www.deepl.com/docs-api
 
 - Download Stanford Corenlp service(Windows/Linux/MacOS)
   - https://stanfordnlp.github.io/CoreNLP/index.html
+
+Note that Java 8 is a pre-requisite of CoreNLP library.
+
 - Detect translation errors:
 
   - Set dataset, api_key in main.py
