@@ -29,6 +29,22 @@
       "purpose": ["debug-test"],
       "console": "integratedTerminal",
       "justMyCode": false
+    },
+    {
+      "name": "app",
+      "args": ["run", "app/main.py"],
+      "env": {
+        "STREAMLIT_BROWSER_GATHER_USAGE_STATS": "FALSE",
+        "STREAMLIT_SERVER_HEADLESS": "TRUE",
+        "STREAMLIT_SERVER_ENABLE_CORS": "FALSE",
+        "STREAMLIT_SERVER_ENABLE_XSRF_PROTECTION": "FALSE"
+      },
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "module": "streamlit",
+      "request": "launch",
+      "type": "python",
+      "justMyCode": false
     }
   ]
 }

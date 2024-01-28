@@ -32,6 +32,7 @@ for name in workbook.sheetnames:
 
 STPBingList = []
 STPGoogleList = []
+STPDeepLList = []
 SITBingList = []
 SITGoogleList = []
 PatInvBingList = []
@@ -185,6 +186,8 @@ def bow(l1, l2):
         dict2[i] = j
     dis = 0
     for i in range(len(dictionary.cfs.items())):
+        if i not in dict1.keys():
+            continue
         l1 = dict1.get(i, 0)
         l2 = dict2.get(i, 0)
         if l2 != l1:
@@ -585,7 +588,7 @@ def TransRepair(ErorShow=False):
 
 
 def STP(dataset, software, ErrorShow=False, ErrorType=False):
-    path = "./STP-Evaluated"
+    path = "./results_romanian"
     print("STP:")
     ssss = dataset
     software = software
@@ -632,6 +635,9 @@ def STP(dataset, software, ErrorShow=False, ErrorType=False):
                                 if listYuan.count(result[0]) < 1:
                                     listYuan.append(result[0])
                                 if item.lower() == "google":
+                                    if STPGoogleList.count(result[0]) < 1:
+                                        STPGoogleList.append(result[0])
+                                elif item.lower() == "google":
                                     if STPGoogleList.count(result[0]) < 1:
                                         STPGoogleList.append(result[0])
                                 else:
@@ -891,4 +897,15 @@ def Overlap():
 
 
 if __name__ == "__main__":
-    Pairs()
+    # STP(
+    #     dataset=["Opinion", "Tech"],
+    #     software=["google", "bing", "deepL"],
+    #     ErrorShow=True,
+    #     ErrorType=True,
+    # )
+    # Pairs()
+    res = bow(
+        "The 70 marks consist of 30 marks.",
+        "The 70 marks consist of 30 marks as score.",
+    )
+    print(res)

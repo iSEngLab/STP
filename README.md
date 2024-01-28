@@ -14,7 +14,7 @@ Machine Translation Testing via Syntactic Tree Pruning
 
 ## Python Version
 
-- python 3.12
+- python 3.11
 
 1. Set environment
 
